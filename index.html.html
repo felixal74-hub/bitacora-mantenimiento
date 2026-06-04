@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bitácora de Mantenimiento de Equipos</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --azul: #1a56db;
+    --azul-claro: #e8f0fe;
+    --azul-medio: #93b4f8;
+    --verde: #0e9f6e;
+    --verde-claro: #d1fae5;
+    --rojo: #e02424;
+    --rojo-claro: #fde8e8;
+    --naranja: #d97706;
+    --naranja-claro: #fef3c7;
+    --gris: #6b7280;
+    --gris-claro: #f3f4f6;
+    --borde: #e5e7eb;
+    --texto: #111827;
+    --texto-sec: #6b7280;
+    --blanco: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f0f4ff;
+    color: var(--texto);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #1a56db 0%, #1e40af 100%);
+    color: white;
+    padding: 24px 32px;
+    box-shadow: 0 4px 20px rgba(26,86,219,0.3);
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .header-icon {
+    width: 44px; height: 44px; background: rgba(255,255,255,0.2);
+    border-radius: 12px; display: flex; align-items: center;
+    justify-content: center; font-size: 22px; flex-shrink: 0;
+  }
+  header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+  header p { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+  .header-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+  .btn-export {
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+    color: white; padding: 8px 16px; border-radius: 8px; font-size: 13px;
+    font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit;
+  }
+  .btn-export:hover { background: rgba(255,255,255,0.25); }
+
+  /* TABS */
+  .tabs-wrap { background: white; border-bottom: 1px solid var(--borde); padding: 0 32px; }
+  .tabs { display: flex; gap: 4px; }
+  .tab {
+    padding: 14px 20px; font-size: 14px; font-weight: 500; cursor: pointer;
+    border-bottom: 2px solid transparent; color: var(--gris); transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab.active { color: var(--azul); border-bottom-color: var(--azul); }
+  .tab:hover:not(.active) { color: var(--texto); }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: flex; gap: 12px; padding: 20px 32px; flex-wrap: wrap;
+  }
+  .stat-card {
+    background: white; border-radius: 12px; padding: 16px 20px;
+    border: 1px solid var(--borde); flex: 1; min-width: 130px;
+  }
+  .stat-label { font-size: 12px; color: var(--gris); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-val { font-size: 28px; font-weight: 600; margin-top: 4px; font-family: 'DM Mono', monospace; }
+  .stat-val.azul { color: var(--azul); }
+  .stat-val.verde { color: var(--verde); }
+  .stat-val.rojo { color: var(--rojo); }
+  .stat-val.naranja { color: var(--naranja); }
+
+  /* TOOLBAR */
+  .toolbar {
+    padding: 0 32px 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  }
+  .search-box {
+    flex: 1; min-width: 200px; position: relative;
+  }
+  .search-box input {
+    width: 100%; padding: 9px 12px 9px 36px; border: 1px solid var(--borde);
+    border-radius: 8px; font-size: 14px; font-family: inherit;
+    background: white; outline: none; transition: border 0.2s;
+  }
+  .search-box input:focus { border-color: var(--azul-medio); }
+  .search-icon {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--gris); font-size: 15px;
+  }
+  .filter-select {
+    padding: 9px 12px; border: 1px solid var(--borde); border-radius: 8px;
+    font-size: 14px; font-family: inherit; background: white; outline: none;
+    cursor: pointer;
+  }
+  .btn-nuevo {
+    background: var(--azul); color: white; border: none; padding: 9px 18px;
+    border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; font-family: inherit; white-space: nowrap;
+  }
+  .btn-nuevo:hover { background: #1e40af; transform: translateY(-1px); }
+
+  /* TABLE */
+  .table-wrap {
+    padding: 0 32px 32px; overflow-x: auto;
+  }
+  table {
+    width: 100%; border-collapse: collapse; background: white;
+    border-radius: 12px; overflow: hidden; border: 1px solid var(--borde);
+    font-size: 13px;
+  }
+  thead { background: #f8faff; }
+  th {
+    padding: 12px 14px; text-align: left; font-size: 11px; font-weight: 600;
+    color: var(--gris); text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--borde); white-space: nowrap;
+  }
+  td { padding: 11px 14px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8faff; }
+  .equipo-id { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--azul); font-size: 12px; }
+  .lab-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .lab-cp { background: #e8f0fe; color: #1a56db; }
+  .lab-mat { background: #d1fae5; color: #065f46; }
+  .lab-ing { background: #fef3c7; color: #92400e; }
+  .check-cell { display: flex; gap: 4px; flex-wrap: wrap; }
+  .check-item {
+    width: 22px; height: 22px; border-radius: 6px; display: flex;
+    align-items: center; justify-content: center; font-size: 13px;
+    title: attr(title);
+  }
+  .check-ok { background: var(--verde-claro); color: var(--verde); }
+  .check-no { background: var(--rojo-claro); color: var(--rojo); }
+  .check-nd { background: var(--gris-claro); color: var(--gris); }
+  .estado-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .estado-ok { background: var(--verde-claro); color: #065f46; }
+  .estado-rev { background: var(--naranja-claro); color: #78350f; }
+  .estado-falla { background: var(--rojo-claro); color: #7f1d1d; }
+  .estado-nd { background: var(--gris-claro); color: var(--gris); }
+  .correctivo-si { color: var(--rojo); font-weight: 600; }
+  .correctivo-no { color: var(--verde); font-weight: 500; }
+  .btn-accion {
+    padding: 5px 10px; border-radius: 6px; border: 1px solid var(--borde);
+    background: white; cursor: pointer; font-size: 12px; font-family: inherit;
+    transition: all 0.15s;
+  }
+  .btn-accion:hover { background: var(--gris-claro); }
+  .btn-accion.editar { color: var(--azul); border-color: var(--azul-medio); }
+  .btn-accion.editar:hover { background: var(--azul-claro); }
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--gris);
+  }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* MODAL */
+  .modal-bg {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 200; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: white; border-radius: 16px; width: 100%; max-width: 720px;
+    max-height: 90vh; overflow-y: auto; padding: 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;
+  }
+  .modal-title { font-size: 18px; font-weight: 600; }
+  .modal-close {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--borde);
+    background: none; cursor: pointer; font-size: 18px; display: flex;
+    align-items: center; justify-content: center; color: var(--gris);
+  }
+  .modal-close:hover { background: var(--gris-claro); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1/-1; }
+  .form-group label { font-size: 12px; font-weight: 600; color: var(--gris); text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 9px 12px; border: 1px solid var(--borde); border-radius: 8px;
+    font-size: 14px; font-family: inherit; outline: none; transition: border 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--azul-medio);
+  }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+  .section-title {
+    font-size: 12px; font-weight: 700; color: var(--azul); text-transform: uppercase;
+    letter-spacing: 0.8px; margin: 20px 0 12px; padding-bottom: 6px;
+    border-bottom: 2px solid var(--azul-claro);
+    grid-column: 1/-1;
+  }
+  .check-group { display: flex; flex-direction: column; gap: 6px; }
+  .check-group label { font-size: 12px; font-weight: 600; color: var(--gris); text-transform: uppercase; letter-spacing: 0.5px; }
+  .check-row { display: flex; gap: 8px; }
+  .check-opt {
+    flex: 1; padding: 8px 6px; border: 1px solid var(--borde); border-radius: 8px;
+    text-align: center; cursor: pointer; font-size: 13px; font-weight: 500;
+    transition: all 0.15s;
+  }
+  .check-opt[data-val="OK"].selected { background: var(--verde-claro); border-color: var(--verde); color: #065f46; }
+  .check-opt[data-val="Falla"].selected { background: var(--rojo-claro); border-color: var(--rojo); color: #7f1d1d; }
+  .check-opt[data-val="N/A"].selected { background: var(--gris-claro); border-color: var(--gris); color: var(--gris); }
+  .check-opt:not(.selected):hover { background: var(--gris-claro); }
+  .modal-footer {
+    display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;
+    padding-top: 20px; border-top: 1px solid var(--borde);
+  }
+  .btn-cancel {
+    padding: 10px 20px; border: 1px solid var(--borde); border-radius: 8px;
+    background: none; font-family: inherit; font-size: 14px; cursor: pointer;
+  }
+  .btn-save {
+    padding: 10px 24px; background: var(--azul); color: white; border: none;
+    border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .btn-save:hover { background: #1e40af; }
+
+  @media(max-width:640px) {
+    header { padding: 16px; }
+    .stats-bar, .toolbar, .table-wrap { padding-left: 16px; padding-right: 16px; }
+    .tabs-wrap { padding: 0 16px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-icon">🖥️</div>
+  <div>
+    <h1>Bitácora de Mantenimiento</h1>
+    <p>Equipos de Cómputo de Escritorio</p>
+  </div>
+  <div class="header-right">
+    <button class="btn-export" onclick="exportarCSV()">⬇ Exportar CSV</button>
+    <button class="btn-export" onclick="generarPDF()" style="background:rgba(255,255,255,0.25);border-color:rgba(255,255,255,0.5);">📄 Reporte PDF</button>
+  </div>
+</header>
+
+<div class="tabs-wrap">
+  <div class="tabs">
+    <div class="tab active" onclick="cambiarLab('todos',this)">Todos los Laboratorios</div>
+    <div class="tab" onclick="cambiarLab('Centro de Cómputo',this)">L1 · Centro de Cómputo</div>
+    <div class="tab" onclick="cambiarLab('Matemáticas',this)">L2 · Matemáticas</div>
+    <div class="tab" onclick="cambiarLab('Inglés',this)">L3 · Inglés</div>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="toolbar">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Buscar por ID de equipo, personal..." oninput="renderTabla()">
+  </div>
+  <select class="filter-select" id="filtroEstado" onchange="renderTabla()">
+    <option value="">Todos los estados</option>
+    <option value="Operativo">Operativo</option>
+    <option value="En revisión">En revisión</option>
+    <option value="Con falla">Con falla</option>
+    <option value="Sin datos">Sin datos</option>
+  </select>
+  <select class="filter-select" id="filtroCorrectivo" onchange="renderTabla()">
+    <option value="">Correctivo: todos</option>
+    <option value="Sí">Requirió correctivo</option>
+    <option value="No">Sin correctivo</option>
+  </select>
+  <button class="btn-nuevo" onclick="abrirModal()">+ Nuevo registro</button>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>ID Equipo</th>
+        <th>Laboratorio</th>
+        <th>Fecha</th>
+        <th title="HW: Encendido">🔌</th>
+        <th title="HW: Ext. Gabinete">🖥</th>
+        <th title="HW: Periféricos">⌨</th>
+        <th title="HW: Cables/Red">🔗</th>
+        <th title="HW: Interna+Pasta">🔧</th>
+        <th title="Sist: OS">💻</th>
+        <th title="Red: Internet">🌐</th>
+        <th title="SW: Usuarios">👤</th>
+        <th title="SW: Temporales">🗑</th>
+        <th title="SW: Programas">📦</th>
+        <th title="SW: Antivirus">🛡</th>
+        <th title="SW: Desfrag">💾</th>
+        <th>Correctivo</th>
+        <th>Estado</th>
+        <th>Personal</th>
+        <th>Observaciones</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="tablaBody"></tbody>
+  </table>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitulo">Nuevo Registro de Mantenimiento</span>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+
+    <div class="form-grid">
+      <div class="section-title">Información General</div>
+
+      <div class="form-group">
+        <label>ID Equipo</label>
+        <input type="text" id="f_id" placeholder="Ej: L1CP-PC01">
+      </div>
+      <div class="form-group">
+        <label>Laboratorio</label>
+        <select id="f_lab">
+          <option value="Centro de Cómputo">L1 · Centro de Cómputo</option>
+          <option value="Matemáticas">L2 · Matemáticas</option>
+          <option value="Inglés">L3 · Inglés</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Fecha de Revisión</label>
+        <input type="date" id="f_fecha">
+      </div>
+      <div class="form-group">
+        <label>Personal de Apoyo</label>
+        <input type="text" id="f_personal" placeholder="Nombre del técnico">
+      </div>
+
+      <div class="section-title">Hardware</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="checksGrid">
+      <!-- Checks generados por JS -->
+    </div>
+
+    <div class="form-grid" style="margin-top:16px;">
+      <div class="section-title">Resultado</div>
+
+      <div class="form-group">
+        <label>¿Requirió Correctivo?</label>
+        <select id="f_correctivo">
+          <option value="">-- Seleccionar --</option>
+          <option value="Sí">Sí</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Estado Final de Entrega</label>
+        <select id="f_estado">
+          <option value="">-- Seleccionar --</option>
+          <option value="Operativo">Operativo</option>
+          <option value="En revisión">En revisión</option>
+          <option value="Con falla">Con falla</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Observaciones / Diagnóstico</label>
+        <textarea id="f_obs" placeholder="Describe los hallazgos, piezas cambiadas, pendientes..."></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-save" onclick="guardarRegistro()">💾 Guardar registro</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATOS ───────────────────────────────────────────────
+const CAMPOS_CHECK = [
+  { key:'hw_encendido',  label:'HW: Encendido del equipo',             emoji:'🔌', grupo:'Hardware' },
+  { key:'hw_externo',    label:'HW: Revisión Externa (Gabinete/Monitor)', emoji:'🖥',  grupo:'Hardware' },
+  { key:'hw_periferico', label:'HW: Periféricos (Teclado/Mouse)',      emoji:'⌨',  grupo:'Hardware' },
+  { key:'hw_cables',     label:'HW: Cables y Conectores de Red',       emoji:'🔗', grupo:'Hardware' },
+  { key:'hw_interna',    label:'HW: Revisión Interna y Pasta Térmica', emoji:'🔧', grupo:'Hardware' },
+  { key:'sw_os',         label:'Sist: Funcionamiento de OS',           emoji:'💻', grupo:'Software / Red' },
+  { key:'red_internet',  label:'Red: Navegación e Internet',           emoji:'🌐', grupo:'Software / Red' },
+  { key:'sw_usuarios',   label:'SW: Cuentas de Usuario',               emoji:'👤', grupo:'Software / Red' },
+  { key:'sw_temp',       label:'SW: Archivos Temporales y Cookies',    emoji:'🗑',  grupo:'Software / Red' },
+  { key:'sw_programas',  label:'SW: Programas No Necesarios',          emoji:'📦', grupo:'Software / Red' },
+  { key:'sw_antivirus',  label:'SW: Seguridad y Antivirus',            emoji:'🛡', grupo:'Software / Red' },
+  { key:'sw_desfrag',    label:'SW: Desfragmentación de Disco',        emoji:'💾', grupo:'Software / Red' },
+];
+
+const EQUIPOS_INICIALES = [
+  ...Array.from({length:40},(_,i)=>({id:`L1CP-PC${String(i+1).padStart(2,'0')}`,lab:'Centro de Cómputo'})),
+  ...Array.from({length:30},(_,i)=>({id:`L2M-PC${String(i+1).padStart(2,'0')}`,lab:'Matemáticas'})),
+  ...Array.from({length:30},(_,i)=>({id:`L3I-PC${String(i+1).padStart(2,'0')}`,lab:'Inglés'})),
+];
+
+function cargarDatos() {
+  const raw = localStorage.getItem('bitacora_mant_v2');
+  if (raw) return JSON.parse(raw);
+  // Seed: equipos vacíos
+  const data = EQUIPOS_INICIALES.map(e => ({
+    id: e.id, lab: e.lab, fecha: '2026-06-03',
+    hw_encendido:'', hw_externo:'', hw_periferico:'', hw_cables:'', hw_interna:'',
+    sw_os:'', red_internet:'', sw_usuarios:'', sw_temp:'', sw_programas:'', sw_antivirus:'', sw_desfrag:'',
+    correctivo:'', estado:'', personal:'', obs:'', _nuevo: true
+  }));
+  guardarDatos(data);
+  return data;
+}
+
+function guardarDatos(data) {
+  localStorage.setItem('bitacora_mant_v2', JSON.stringify(data));
+}
+
+let DATOS = cargarDatos();
+let labActivo = 'todos';
+let editandoIdx = null;
+
+// ── FILTRADO ─────────────────────────────────────────────
+function datosFiltrados() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const estado = document.getElementById('filtroEstado').value;
+  const corr = document.getElementById('filtroCorrectivo').value;
+  return DATOS.filter(r => {
+    if (labActivo !== 'todos' && r.lab !== labActivo) return false;
+    if (q && !r.id.toLowerCase().includes(q) && !(r.personal||'').toLowerCase().includes(q) && !(r.obs||'').toLowerCase().includes(q)) return false;
+    if (estado) {
+      const est = r.estado || 'Sin datos';
+      if (estado === 'Sin datos' && est !== '') return false;
+      if (estado !== 'Sin datos' && est !== estado) return false;
+    }
+    if (corr && r.correctivo !== corr) return false;
+    return true;
+  });
+}
+
+// ── STATS ────────────────────────────────────────────────
+function renderStats() {
+  const d = labActivo === 'todos' ? DATOS : DATOS.filter(r=>r.lab===labActivo);
+  const total = d.length;
+  const operativo = d.filter(r=>r.estado==='Operativo').length;
+  const falla = d.filter(r=>r.estado==='Con falla').length;
+  const correctivo = d.filter(r=>r.correctivo==='Sí').length;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Equipos</div><div class="stat-val azul">${total}</div></div>
+    <div class="stat-card"><div class="stat-label">Operativos</div><div class="stat-val verde">${operativo}</div></div>
+    <div class="stat-card"><div class="stat-label">Con Falla</div><div class="stat-val rojo">${falla}</div></div>
+    <div class="stat-card"><div class="stat-label">Requirieron Correctivo</div><div class="stat-val naranja">${correctivo}</div></div>
+  `;
+}
+
+// ── TABLA ────────────────────────────────────────────────
+function checkHtml(val) {
+  if (val === 'OK')    return `<span class="check-item check-ok" title="OK">✓</span>`;
+  if (val === 'Falla') return `<span class="check-item check-no" title="Falla">✗</span>`;
+  return `<span class="check-item check-nd" title="Sin dato">—</span>`;
+}
+function labClass(lab) {
+  if (lab.includes('Cómputo')) return 'lab-cp';
+  if (lab.includes('Matem'))   return 'lab-mat';
+  return 'lab-ing';
+}
+function estadoClass(est) {
+  if (est === 'Operativo')  return 'estado-ok';
+  if (est === 'En revisión') return 'estado-rev';
+  if (est === 'Con falla')  return 'estado-falla';
+  return 'estado-nd';
+}
+
+function renderTabla() {
+  const datos = datosFiltrados();
+  const tbody = document.getElementById('tablaBody');
+  if (!datos.length) {
+    tbody.innerHTML = `<tr><td colspan="20"><div class="empty-state"><div class="icon">📋</div><p>No se encontraron registros</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = datos.map((r,i) => {
+    const idx = DATOS.indexOf(r);
+    const est = r.estado || 'Sin datos';
+    const fecha = r.fecha ? r.fecha.replace(/-/g,'/') : '—';
+    return `<tr>
+      <td><span class="equipo-id">${r.id}</span></td>
+      <td><span class="lab-badge ${labClass(r.lab)}">${r.lab}</span></td>
+      <td>${fecha}</td>
+      ${CAMPOS_CHECK.map(c=>checkHtml(r[c.key])).map(h=>`<td>${h}</td>`).join('')}
+      <td><span class="${r.correctivo==='Sí'?'correctivo-si':'correctivo-no'}">${r.correctivo||'—'}</span></td>
+      <td><span class="estado-badge ${estadoClass(est)}">${est}</span></td>
+      <td>${r.personal||'—'}</td>
+      <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${(r.obs||'').replace(/"/g,'&quot;')}">${r.obs||'—'}</td>
+      <td><button class="btn-accion editar" onclick="editarRegistro(${idx})">✏ Editar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── MODAL ────────────────────────────────────────────────
+function buildChecksUI() {
+  const grid = document.getElementById('checksGrid');
+  let html = '';
+  let grupoActual = '';
+  CAMPOS_CHECK.forEach(c => {
+    if (c.grupo !== grupoActual) {
+      grupoActual = c.grupo;
+      html += `<div style="grid-column:1/-1;font-size:12px;font-weight:700;color:var(--azul);text-transform:uppercase;letter-spacing:.8px;padding:12px 0 6px;border-bottom:2px solid var(--azul-claro)">${grupoActual}</div>`;
+    }
+    html += `<div class="check-group">
+      <label>${c.emoji} ${c.label}</label>
+      <div class="check-row">
+        <div class="check-opt" data-key="${c.key}" data-val="OK" onclick="selectCheck(this)">✓ OK</div>
+        <div class="check-opt" data-key="${c.key}" data-val="Falla" onclick="selectCheck(this)">✗ Falla</div>
+        <div class="check-opt" data-key="${c.key}" data-val="N/A" onclick="selectCheck(this)">— N/A</div>
+      </div>
+    </div>`;
+  });
+  grid.innerHTML = html;
+}
+
+function selectCheck(el) {
+  const key = el.dataset.key;
+  document.querySelectorAll(`[data-key="${key}"]`).forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function getChecks() {
+  const res = {};
+  CAMPOS_CHECK.forEach(c => {
+    const sel = document.querySelector(`[data-key="${c.key}"].selected`);
+    res[c.key] = sel ? sel.dataset.val : '';
+  });
+  return res;
+}
+
+function setChecks(r) {
+  CAMPOS_CHECK.forEach(c => {
+    document.querySelectorAll(`[data-key="${c.key}"]`).forEach(e=>e.classList.remove('selected'));
+    if (r[c.key]) {
+      const el = document.querySelector(`[data-key="${c.key}"][data-val="${r[c.key]}"]`);
+      if (el) el.classList.add('selected');
+    }
+  });
+}
+
+function abrirModal(r=null) {
+  buildChecksUI();
+  editandoIdx = null;
+  document.getElementById('modalTitulo').textContent = 'Nuevo Registro de Mantenimiento';
+  document.getElementById('f_id').value = '';
+  document.getElementById('f_lab').value = labActivo !== 'todos' ? labActivo : 'Centro de Cómputo';
+  document.getElementById('f_fecha').value = new Date().toISOString().slice(0,10);
+  document.getElementById('f_personal').value = '';
+  document.getElementById('f_correctivo').value = '';
+  document.getElementById('f_estado').value = '';
+  document.getElementById('f_obs').value = '';
+  document.getElementById('modalBg').classList.add('open');
+}
+
+function editarRegistro(idx) {
+  const r = DATOS[idx];
+  buildChecksUI();
+  editandoIdx = idx;
+  document.getElementById('modalTitulo').textContent = `Editando: ${r.id}`;
+  document.getElementById('f_id').value = r.id;
+  document.getElementById('f_id').readOnly = true;
+  document.getElementById('f_lab').value = r.lab;
+  document.getElementById('f_fecha').value = r.fecha || '';
+  document.getElementById('f_personal').value = r.personal || '';
+  document.getElementById('f_correctivo').value = r.correctivo || '';
+  document.getElementById('f_estado').value = r.estado || '';
+  document.getElementById('f_obs').value = r.obs || '';
+  setChecks(r);
+  document.getElementById('modalBg').classList.add('open');
+}
+
+function cerrarModal() {
+  document.getElementById('modalBg').classList.remove('open');
+  document.getElementById('f_id').readOnly = false;
+  editandoIdx = null;
+}
+
+function guardarRegistro() {
+  const id = document.getElementById('f_id').value.trim();
+  if (!id) { alert('El ID de equipo es obligatorio'); return; }
+  const reg = {
+    id, lab: document.getElementById('f_lab').value,
+    fecha: document.getElementById('f_fecha').value,
+    personal: document.getElementById('f_personal').value,
+    correctivo: document.getElementById('f_correctivo').value,
+    estado: document.getElementById('f_estado').value,
+    obs: document.getElementById('f_obs').value,
+    ...getChecks()
+  };
+  if (editandoIdx !== null) {
+    DATOS[editandoIdx] = reg;
+  } else {
+    // Si existe el ID, actualizar
+    const existing = DATOS.findIndex(r=>r.id===id);
+    if (existing >= 0) DATOS[existing] = reg;
+    else DATOS.push(reg);
+  }
+  guardarDatos(DATOS);
+  renderStats();
+  renderTabla();
+  cerrarModal();
+}
+
+// ── TAB ──────────────────────────────────────────────────
+function cambiarLab(lab, el) {
+  labActivo = lab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderStats();
+  renderTabla();
+}
+
+// ── EXPORT CSV ───────────────────────────────────────────
+function exportarCSV() {
+  const cols = ['ID Equipo','Laboratorio','Fecha','HW Encendido','HW Externo','HW Periféricos','HW Cables','HW Interna','Sist OS','Red Internet','SW Usuarios','SW Temporales','SW Programas','SW Antivirus','SW Desfrag','Correctivo','Estado','Personal','Observaciones'];
+  const keys = ['id','lab','fecha',...CAMPOS_CHECK.map(c=>c.key),'correctivo','estado','personal','obs'];
+  const rows = [cols, ...DATOS.map(r=>keys.map(k=>`"${(r[k]||'').toString().replace(/"/g,'""')}"`))]
+    .map(r=>r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(rows);
+  a.download = `bitacora_mantenimiento_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ── REPORTE PDF ──────────────────────────────────────────
+function generarPDF() {
+  const btn = event.target;
+  btn.textContent = '⏳ Generando...';
+  btn.disabled = true;
+
+  // Cargar jsPDF dinámicamente
+  if (!window.jspdf) {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = () => {
+      const s2 = document.createElement('script');
+      s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+      s2.onload = () => { _construirPDF(); btn.textContent = '📄 Reporte PDF'; btn.disabled = false; };
+      document.head.appendChild(s2);
+    };
+    document.head.appendChild(s);
+  } else {
+    _construirPDF();
+    btn.textContent = '📄 Reporte PDF';
+    btn.disabled = false;
+  }
+}
+
+function _construirPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+  const ahora = new Date();
+  const fechaStr = ahora.toLocaleDateString('es-MX', { year:'numeric', month:'long', day:'numeric' });
+  const horaStr  = ahora.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+
+  const AZUL   = [26, 86, 219];
+  const AZUL2  = [30, 64, 175];
+  const VERDE  = [14, 159, 110];
+  const ROJO   = [224, 36, 36];
+  const NARANJA= [217, 119, 6];
+  const GRIS   = [107, 114, 128];
+  const BG     = [240, 244, 255];
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+
+  // ── Función encabezado de página ──
+  function encabezado(titulo, pagNum, totalPags) {
+    // Banda azul superior
+    doc.setFillColor(...AZUL);
+    doc.rect(0, 0, W, 22, 'F');
+    doc.setFillColor(...AZUL2);
+    doc.rect(0, 18, W, 4, 'F');
+
+    // Ícono fondo
+    doc.setFillColor(255,255,255,0.15);
+    doc.roundedRect(8, 4, 14, 14, 2, 2, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(14);
+    doc.text('🖥', 11, 14);
+
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(13);
+    doc.setTextColor(255,255,255);
+    doc.text('Bitácora de Mantenimiento — Equipos de Cómputo', 26, 10);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
+    doc.setTextColor(200,215,255);
+    doc.text(titulo, 26, 16);
+
+    // Fecha y página (derecha)
+    doc.setFontSize(8);
+    doc.setTextColor(200,215,255);
+    doc.text(`Generado: ${fechaStr} ${horaStr}`, W-8, 10, {align:'right'});
+    doc.text(`Página ${pagNum} de ${totalPags}`, W-8, 16, {align:'right'});
+  }
+
+  // ── Función pie de página ──
+  function pie() {
+    doc.setDrawColor(...AZUL);
+    doc.setLineWidth(0.3);
+    doc.line(10, H-8, W-10, H-8);
+    doc.setFontSize(7);
+    doc.setTextColor(...GRIS);
+    doc.text('Bitácora de Mantenimiento de Equipos de Cómputo', 10, H-4);
+    doc.text('Documento generado automáticamente', W-10, H-4, {align:'right'});
+  }
+
+  // ─────────────────────────────────
+  // PÁGINA 1: Resumen ejecutivo
+  // ─────────────────────────────────
+  encabezado('Resumen Ejecutivo', 1, 4);
+
+  // Stats globales
+  const total  = DATOS.length;
+  const ops    = DATOS.filter(r=>r.estado==='Operativo').length;
+  const fallas = DATOS.filter(r=>r.estado==='Con falla').length;
+  const revs   = DATOS.filter(r=>r.estado==='En revisión').length;
+  const correc = DATOS.filter(r=>r.correctivo==='Sí').length;
+  const sinDat = DATOS.filter(r=>!r.estado).length;
+  const pctOps = total ? Math.round(ops/total*100) : 0;
+
+  // Tarjetas de stats
+  const cards = [
+    { label:'Total Equipos',      val: total,  color: AZUL,    icon:'📋' },
+    { label:'Operativos',         val: ops,    color: VERDE,   icon:'✅' },
+    { label:'Con Falla',          val: fallas, color: ROJO,    icon:'❌' },
+    { label:'En Revisión',        val: revs,   color: NARANJA, icon:'🔄' },
+    { label:'Requirieron Correctivo', val: correc, color:[139,92,246], icon:'🔧' },
+    { label:'Sin Datos',          val: sinDat, color: GRIS,    icon:'—' },
+  ];
+
+  const cW = (W-20)/3, cH = 24, startY = 28, gap = 4;
+  cards.forEach((c,i) => {
+    const col = i % 3, row = Math.floor(i/3);
+    const x = 10 + col*(cW+gap), y = startY + row*(cH+gap);
+    doc.setFillColor(248,250,255);
+    doc.roundedRect(x, y, cW, cH, 3, 3, 'F');
+    doc.setDrawColor(...c.color);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(x, y, cW, cH, 3, 3, 'S');
+    doc.setFillColor(...c.color);
+    doc.rect(x, y, 3, cH, 'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(18);
+    doc.setTextColor(...c.color);
+    doc.text(String(c.val), x+8, y+15);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...GRIS);
+    doc.text(c.label, x+8, y+21);
+  });
+
+  // Barra de progreso operatividad
+  const barY = startY + 2*(cH+gap) + 10;
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(10);
+  doc.setTextColor(30,30,30);
+  doc.text('Índice de Operatividad Global', 10, barY);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(10);
+  doc.setTextColor(...AZUL);
+  doc.text(`${pctOps}%`, W-10, barY, {align:'right'});
+
+  doc.setFillColor(229,231,235);
+  doc.roundedRect(10, barY+3, W-20, 7, 3, 3, 'F');
+  if (pctOps > 0) {
+    const col = pctOps >= 80 ? VERDE : pctOps >= 50 ? NARANJA : ROJO;
+    doc.setFillColor(...col);
+    doc.roundedRect(10, barY+3, (W-20)*pctOps/100, 7, 3, 3, 'F');
+  }
+
+  // Tabla resumen por laboratorio
+  const labs = ['Centro de Cómputo','Matemáticas','Inglés'];
+  const resumenLab = labs.map(lab => {
+    const d = DATOS.filter(r=>r.lab===lab);
+    return [
+      lab,
+      d.length,
+      d.filter(r=>r.estado==='Operativo').length,
+      d.filter(r=>r.estado==='Con falla').length,
+      d.filter(r=>r.estado==='En revisión').length,
+      d.filter(r=>r.correctivo==='Sí').length,
+      d.filter(r=>r.estado==='Operativo').length && d.length
+        ? Math.round(d.filter(r=>r.estado==='Operativo').length/d.length*100)+'%' : '0%'
+    ];
+  });
+
+  doc.autoTable({
+    startY: barY + 18,
+    head: [['Laboratorio','Total','Operativos','Con Falla','En Revisión','Correctivos','% Operatividad']],
+    body: resumenLab,
+    theme: 'grid',
+    headStyles: { fillColor: AZUL, textColor: 255, fontStyle: 'bold', fontSize: 9 },
+    bodyStyles: { fontSize: 9, textColor: [30,30,30] },
+    alternateRowStyles: { fillColor: [248,250,255] },
+    columnStyles: {
+      0: { fontStyle:'bold' },
+      6: { textColor: VERDE, fontStyle:'bold' }
+    },
+    margin: { left:10, right:10 },
+  });
+
+  // Resumen de checks (porcentaje OK por campo)
+  const checkY = doc.lastAutoTable.finalY + 8;
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(10);
+  doc.setTextColor(30,30,30);
+  doc.text('Estado por Tipo de Revisión', 10, checkY);
+
+  const checkData = CAMPOS_CHECK.map(c => {
+    const total2 = DATOS.filter(r=>r[c.key]).length || 1;
+    const ok   = DATOS.filter(r=>r[c.key]==='OK').length;
+    const falla= DATOS.filter(r=>r[c.key]==='Falla').length;
+    const pct  = Math.round(ok/total2*100);
+    return [c.emoji+' '+c.label, ok, falla, DATOS.filter(r=>r[c.key]==='N/A').length, pct+'%'];
+  });
+
+  doc.autoTable({
+    startY: checkY + 4,
+    head: [['Revisión','OK','Falla','N/A','% OK']],
+    body: checkData,
+    theme: 'grid',
+    headStyles: { fillColor: AZUL2, textColor:255, fontStyle:'bold', fontSize:8 },
+    bodyStyles: { fontSize:8, textColor:[30,30,30] },
+    alternateRowStyles: { fillColor:[248,250,255] },
+    columnStyles: {
+      1: { textColor: VERDE, fontStyle:'bold', halign:'center' },
+      2: { textColor: ROJO,  fontStyle:'bold', halign:'center' },
+      3: { textColor: GRIS,  halign:'center' },
+      4: { textColor: AZUL,  fontStyle:'bold', halign:'center' },
+    },
+    margin: { left:10, right:10 },
+  });
+
+  pie();
+
+  // ─────────────────────────────────
+  // PÁGINAS 2-4: Detalle por laboratorio
+  // ─────────────────────────────────
+  const labInfo = [
+    { nombre:'Centro de Cómputo', codigo:'L1CP', pagNum:2 },
+    { nombre:'Matemáticas',       codigo:'L2M',  pagNum:3 },
+    { nombre:'Inglés',            codigo:'L3I',  pagNum:4 },
+  ];
+
+  labInfo.forEach(({nombre, codigo, pagNum}) => {
+    doc.addPage();
+    encabezado(`Laboratorio: ${nombre}`, pagNum, 4);
+
+    const equipos = DATOS.filter(r=>r.lab===nombre);
+    const body = equipos.map(r => [
+      r.id,
+      r.fecha || '—',
+      r.hw_encendido  || '—',
+      r.hw_externo    || '—',
+      r.hw_periferico || '—',
+      r.hw_cables     || '—',
+      r.hw_interna    || '—',
+      r.sw_os         || '—',
+      r.red_internet  || '—',
+      r.sw_usuarios   || '—',
+      r.sw_temp       || '—',
+      r.sw_programas  || '—',
+      r.sw_antivirus  || '—',
+      r.sw_desfrag    || '—',
+      r.correctivo    || '—',
+      r.estado        || 'Sin datos',
+      r.personal      || '—',
+    ]);
+
+    doc.autoTable({
+      startY: 26,
+      head: [[
+        'ID Equipo','Fecha',
+        'Encend.','Ext.','Periféricos','Cables','Interna',
+        'OS','Internet','Usuarios','Temp.','Programas','Antivirus','Desfrag',
+        'Correctivo','Estado','Personal'
+      ]],
+      body,
+      theme: 'grid',
+      headStyles: { fillColor: AZUL, textColor:255, fontStyle:'bold', fontSize:7, halign:'center' },
+      bodyStyles: { fontSize:7, textColor:[30,30,30], halign:'center' },
+      columnStyles: {
+        0: { fontStyle:'bold', textColor: AZUL, halign:'left', cellWidth:18 },
+        1: { cellWidth:16, halign:'left' },
+        15:{ fontStyle:'bold' },
+        16:{ halign:'left' },
+      },
+      alternateRowStyles: { fillColor:[248,250,255] },
+      didParseCell: (data) => {
+        if (data.section === 'body') {
+          const v = data.cell.raw;
+          if (v === 'OK')        { data.cell.styles.textColor = VERDE; data.cell.styles.fontStyle = 'bold'; }
+          else if (v === 'Falla'){ data.cell.styles.textColor = ROJO;  data.cell.styles.fontStyle = 'bold'; }
+          else if (v === 'Sí' && data.column.index === 14) { data.cell.styles.textColor = ROJO; data.cell.styles.fontStyle = 'bold'; }
+          else if (v === 'No' && data.column.index === 14) { data.cell.styles.textColor = VERDE; }
+          else if (v === 'Operativo')  { data.cell.styles.textColor = VERDE; data.cell.styles.fontStyle = 'bold'; }
+          else if (v === 'Con falla')  { data.cell.styles.textColor = ROJO;  data.cell.styles.fontStyle = 'bold'; }
+          else if (v === 'En revisión'){ data.cell.styles.textColor = NARANJA; }
+        }
+      },
+      margin: { left:6, right:6 },
+    });
+
+    // Mini stats del lab
+    const statsY = doc.lastAutoTable.finalY + 5;
+    if (statsY < H - 25) {
+      const labTotal = equipos.length;
+      const labOps   = equipos.filter(r=>r.estado==='Operativo').length;
+      const labFalla = equipos.filter(r=>r.estado==='Con falla').length;
+      const labCorr  = equipos.filter(r=>r.correctivo==='Sí').length;
+      doc.setFontSize(8);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(30,30,30);
+      doc.text(`Resumen ${nombre}: `, 6, statsY+4);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(...VERDE);
+      doc.text(`✓ ${labOps} operativos`, 40, statsY+4);
+      doc.setTextColor(...ROJO);
+      doc.text(`✗ ${labFalla} con falla`, 75, statsY+4);
+      doc.setTextColor(...NARANJA);
+      doc.text(`🔧 ${labCorr} correctivos`, 108, statsY+4);
+      doc.setTextColor(...GRIS);
+      doc.text(`Total: ${labTotal} equipos`, 148, statsY+4);
+    }
+
+    pie();
+  });
+
+  // ── Guardar ──
+  const filename = `Bitacora_Mantenimiento_${new Date().toISOString().slice(0,10)}.pdf`;
+  doc.save(filename);
+}
+
+// ── INIT ─────────────────────────────────────────────────
+document.getElementById('modalBg').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalBg')) cerrarModal();
+});
+
+renderStats();
+renderTabla();
+</script>
+</body>
+</html>
